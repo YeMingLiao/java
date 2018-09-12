@@ -36,6 +36,7 @@ public class UserControllerTest {
     public void whenQuerySuccess() throws Exception {
         //一个集合，长度为3
         String result = mockMvc.perform(MockMvcRequestBuilders.get("/user")
+                .param("id", "1")
                 .param("username", "jono")
                 .param("age", "16")
                 .param("ageTo", "20")
