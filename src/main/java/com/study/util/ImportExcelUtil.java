@@ -23,7 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
  * excel导入，按照已经建造好的字段导入
  * Created by gf on 2018/10/12.
  */
-public class ImportExcelUtil<T> {
+public class ImportExcelUtil {
 
     // 总行数
     private int totalRows = 0;
@@ -54,10 +54,9 @@ public class ImportExcelUtil<T> {
     /**
      * 读EXCEL文件，获取信息集合
      * @param mFile excel文件
-     * @param t 类
      * @return
      */
-    public List<Map<String, Object>> getExcelInfo(MultipartFile mFile, T t) {
+    public List<Map<String, Object>> getExcelInfo(MultipartFile mFile) {
         String fileName = mFile.getOriginalFilename();// 获取文件名
 //		List<Map<String, Object>> userList = new LinkedList<Map<String, Object>>();
         try {
@@ -68,7 +67,7 @@ public class ImportExcelUtil<T> {
             if (isExcel2007(fileName)) {
                 isExcel2003 = false;
             }
-            return createExcel(mFile.getInputStream(), isExcel2003, t);
+            return createExcel(mFile.getInputStream(), isExcel2003);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -83,7 +82,7 @@ public class ImportExcelUtil<T> {
      * @return
      * @throws IOException
      */
-    public List<Map<String, Object>> createExcel(InputStream is, boolean isExcel2003, T t) {
+    public List<Map<String, Object>> createExcel(InputStream is, boolean isExcel2003) {
         try {
             Workbook wb = null;
             if (isExcel2003) {// 当excel是2003时,创建excel2003
@@ -91,7 +90,7 @@ public class ImportExcelUtil<T> {
             } else {// 当excel是2007时,创建excel2007
                 wb = new XSSFWorkbook(is);
             }
-            return readExcelValue(wb, t);// 读取Excel里面客户的信息
+            return readExcelValue(wb);// 读取Excel里面客户的信息
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -104,7 +103,7 @@ public class ImportExcelUtil<T> {
      * @param wb
      * @return
      */
-    private List<Map<String, Object>> readExcelValue(Workbook wb, T t) {
+    private List<Map<String, Object>> readExcelValue(Workbook wb) {
         // 得到第一个shell
         Sheet sheet = wb.getSheetAt(0);
         // 得到Excel的行数
@@ -114,6 +113,15 @@ public class ImportExcelUtil<T> {
             this.totalCells = sheet.getRow(0).getPhysicalNumberOfCells();
         }
         List<Map<String, Object>> userList = new ArrayList<>();
+
+        //获取key值
+        Row rowKey = sheet.getRow(0);
+        List<String> rowkeys = new ArrayList<>();
+        for(int i = 0; i < rowKey.getLastCellNum(); i++){
+            Cell cell = rowKey.getCell(i);
+            rowkeys.add(this.formatCell3(cell));
+        }
+
         // 循环Excel行数
         for (int r = 1; r < totalRows; r++) {
             Row row = sheet.getRow(r);
@@ -123,19 +131,17 @@ public class ImportExcelUtil<T> {
             // 循环Excel的列
             Map<String, Object> map = new HashMap<>();
             //通过反射获取字段名
-            Field[] field = t.getClass().getDeclaredFields();
             for (int c = 0; c < this.totalCells; c++) {
                 Cell cell = row.getCell(c);
 //                if(cell != null){
 //                    cell.setCellType(Cell.CELL_TYPE_STRING);
 //                }
-                String valiue = formatCell3(cell);
-                //设置是否允许访问，不是修改原来的访问权限修饰词。
-                field[c].setAccessible(true);
+                String valiue = this.formatCell3(cell);
                 //返回输出指定对象a上此 Field表示的字段名和字段值
-                map.put(field[c].getName(), valiue);
+                map.put(rowkeys.get(c), valiue);
             }
             // 添加到list
+            System.out.println(map.toString());
             userList.add(map);
         }
         return userList;
@@ -147,7 +153,7 @@ public class ImportExcelUtil<T> {
      * @param filePath
      * @return
      */
-    private boolean validateExcel(String filePath) {
+    public boolean validateExcel(String filePath) {
         if (filePath == null || !(isExcel2003(filePath) || isExcel2007(filePath))) {
             errorMsg = "文件名不是excel格式";
             return false;
@@ -156,12 +162,12 @@ public class ImportExcelUtil<T> {
     }
 
     // @描述：是否是2003的excel，返回true是2003
-    private boolean isExcel2003(String filePath) {
+    public boolean isExcel2003(String filePath) {
         return filePath.matches("^.+\\.(?i)(xls)$");
     }
 
     // @描述：是否是2007的excel，返回true是2007
-    private boolean isExcel2007(String filePath) {
+    public boolean isExcel2007(String filePath) {
         return filePath.matches("^.+\\.(?i)(xlsx)$");
     }
 
@@ -170,7 +176,7 @@ public class ImportExcelUtil<T> {
      * @param cell
      * @return
      */
-    private String formatCell3(Cell cell) {
+    public String formatCell3(Cell cell) {
         if (cell == null) {
             return "";
         }
