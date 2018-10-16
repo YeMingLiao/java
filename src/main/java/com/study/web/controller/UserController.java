@@ -5,8 +5,12 @@ import com.study.dto.User;
 import com.study.dto.UserQueryCondition;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,13 +23,42 @@ public class UserController {
 
     //处理创建请求
     @PostMapping
-    public User create(User user){
+    public User create(@Valid @RequestBody User user, BindingResult errors){
+        if (errors.hasErrors()){
+            errors.getAllErrors().forEach(error -> System.out.println(error.getDefaultMessage()));
+        }
         user.setId("1");
 
         System.out.println(user.getId());
         System.out.println(user.getUsername());
         System.out.println(user.getPassword());
+        System.out.println(user.getBirthday());
         return user;
+    }
+
+    //处理修改请求
+    @PutMapping("/{id:\\d+}")
+    public User update(@Valid @RequestBody User user, BindingResult errors){
+        if (errors.hasErrors()){
+            errors.getAllErrors().forEach(error -> {
+                FieldError fieldError = (FieldError) error;
+                String message = fieldError.getField() +":"+ error.getDefaultMessage();
+                System.out.println(message);
+            });
+        }
+        user.setId("1");
+
+        System.out.println(user.getId());
+        System.out.println(user.getBirthday());
+        System.out.println(user.getUsername());
+        System.out.println(user.getPassword());
+        return user;
+    }
+
+    //处理删除
+    @DeleteMapping("/{id:\\d+}")
+    public void delete(@PathVariable(name = "id") String id){
+        System.out.println("--->"+id);
     }
 
     @GetMapping

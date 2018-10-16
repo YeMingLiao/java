@@ -1,6 +1,7 @@
 package com.study.dto;
 
 import com.fasterxml.jackson.annotation.JsonView;
+import com.study.validator.MyConstraint;
 import io.swagger.annotations.ApiModelProperty;
 import org.hibernate.validator.constraints.NotBlank;
 
@@ -21,6 +22,7 @@ public class User {
 
     @ApiModelProperty(value = "用户名")
     @JsonView(UserSimpleView.class)
+    @MyConstraint(message = "这是测试")
     private String username;
 
     @NotBlank(message = "密码不能为空")

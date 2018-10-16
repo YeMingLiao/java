@@ -183,16 +183,21 @@ public class ImportExcelUtil {
         switch (cell.getCellType()) {
             case HSSFCell.CELL_TYPE_NUMERIC:
                 //日期格式的处理
+                String val = "";
                 if (HSSFDateUtil.isCellDateFormatted(cell)) {
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                     return sdf.format(HSSFDateUtil.getJavaDate(cell.getNumericCellValue()));
+                }else {
+                    cell.setCellType(Cell.CELL_TYPE_STRING);
+                    String temp = cell.getStringCellValue();
+                    // 判断是否包含小数点，如果不含小数点，则以字符串读取，如果含小数点，则转换为Double类型的字符串
+                    if (temp.contains(".")) {
+                        val = String.valueOf(new Double(temp)).trim();
+                    } else {
+                        val = temp.trim();
+                    }
                 }
-                if (cell.getCellType() == HSSFCell.CELL_TYPE_NUMERIC) {
-                    String value = String.valueOf(cell.getNumericCellValue());
-
-                    return value.substring(0, value.length() - 2 > 0 ? value.length() - 2 : 1);
-                }
-                return cell.getStringCellValue();
+                return val;
 
             //字符串
             case HSSFCell.CELL_TYPE_STRING:
