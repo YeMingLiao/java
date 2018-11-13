@@ -1,18 +1,21 @@
 package com.study.util;
 
 import org.apache.poi.hssf.usermodel.*;
-import org.apache.poi.hssf.util.CellRangeAddress;
 import org.apache.poi.hssf.util.HSSFColor;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.util.CellRangeAddress;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URLEncoder;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
- * excel导出
  * Created by gf on 2018/5/8.
  */
 public class ExcelUtil {
@@ -26,13 +29,7 @@ public class ExcelUtil {
 
     HttpServletResponse response;
 
-    /**
-     * 构造方法，传入要导出的数据
-     * @param title 标题
-     * @param rowName 导出的列名称
-     * @param dataList 导出的数据
-     * @param response response
-     */
+    //构造方法，传入要导出的数据
     public ExcelUtil(String title, String[] rowName, List<Object[]>  dataList, HttpServletResponse response){
         this.dataList = dataList;
         this.rowName = rowName;
@@ -41,8 +38,105 @@ public class ExcelUtil {
     }
 
     /*
-     * 导出数据
+     * 导出数据(本地)
      * */
+    public void exportData() throws Exception{
+        try{
+            HSSFWorkbook workbook = new HSSFWorkbook();                        // 创建工作簿对象
+            HSSFSheet sheet = workbook.createSheet(title);                     // 创建工作表
+
+            // 产生表格标题行
+            HSSFRow rowm = sheet.createRow(0);
+            HSSFCell cellTiltle = rowm.createCell(0);
+
+            rowm.setHeight((short) (25 * 30)); //设置高度
+
+            //sheet样式定义【getColumnTopStyle()/getStyle()均为自定义方法 - 在下面  - 可扩展】
+            HSSFCellStyle columnTopStyle = this.getColumnTopStyle(workbook);//获取列头样式对象
+            HSSFCellStyle style = this.getStyle(workbook);                    //单元格样式对象
+
+            sheet.addMergedRegion(new CellRangeAddress(0, 1, 0, (rowName.length-1)));
+            cellTiltle.setCellStyle(columnTopStyle);
+            cellTiltle.setCellValue(title);
+
+            // 定义所需列数
+            int columnNum = rowName.length;
+            HSSFRow rowRowName = sheet.createRow(2);                // 在索引2的位置创建行(最顶端的行开始的第二行)
+
+            rowRowName.setHeight((short) (25 * 30)); //设置高度
+
+            // 将列头设置到sheet的单元格中
+            for(int n=0;n<columnNum;n++){
+                HSSFCell cellRowName = rowRowName.createCell(n);                //创建列头对应个数的单元格
+                cellRowName.setCellType(HSSFCell.CELL_TYPE_STRING);                //设置列头单元格的数据类型
+                HSSFRichTextString text = new HSSFRichTextString(rowName[n]);
+                cellRowName.setCellValue(text);                                    //设置列头单元格的值
+                cellRowName.setCellStyle(columnTopStyle);                        //设置列头单元格样式
+            }
+
+            //将查询出的数据设置到sheet对应的单元格中
+            for(int i=0;i<dataList.size();i++){
+
+                Object[] obj = dataList.get(i);//遍历每个对象
+                HSSFRow row = sheet.createRow(i+3);//创建所需的行数
+
+                row.setHeight((short) (25 * 20)); //设置高度
+
+                for(int j=0; j<obj.length; j++){
+                    HSSFCell cell = null;   //设置单元格的数据类型
+                    if(j == 0){
+                        cell = row.createCell(j, HSSFCell.CELL_TYPE_NUMERIC);
+                        cell.setCellValue(i+1);
+                    }else{
+                        cell = row.createCell(j, HSSFCell.CELL_TYPE_STRING);
+                        if(!"".equals(obj[j]) && obj[j] != null){
+                            cell.setCellValue(obj[j].toString());                        //设置单元格的值
+                        }
+                    }
+                    cell.setCellStyle(style);                                    //设置单元格样式
+                }
+            }
+            //让列宽随着导出的列长自动适应
+            for (int colNum = 0; colNum < columnNum; colNum++) {
+                int columnWidth = sheet.getColumnWidth(colNum) / 256;
+                for (int rowNum = 0; rowNum < sheet.getLastRowNum(); rowNum++) {
+                    HSSFRow currentRow;
+                    //当前行未被使用过
+                    if (sheet.getRow(rowNum) == null) {
+                        currentRow = sheet.createRow(rowNum);
+                    } else {
+                        currentRow = sheet.getRow(rowNum);
+                    }
+                    if (currentRow.getCell(colNum) != null) {
+                        HSSFCell currentCell = currentRow.getCell(colNum);
+                        if (currentCell.getCellType() == HSSFCell.CELL_TYPE_STRING) {
+                            int length = this.getStringCellValue(currentCell).getBytes().length;
+                            if (columnWidth < length) {
+                                columnWidth = length;
+                            }
+                        }
+                    }
+                }
+                if(colNum == 0){
+                    sheet.setColumnWidth(colNum, (columnWidth-2) * 128);
+                }else{
+                    sheet.setColumnWidth(colNum, (columnWidth+4) * 256);
+                }
+            }
+
+            try {
+                FileOutputStream out = new FileOutputStream("E:\\" + new SimpleDateFormat("yyyy-MM-dd").format(new Date())+ this.title +".xls");
+                workbook.write(out);
+                out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
     public void export() throws Exception{
         try{
             HSSFWorkbook workbook = new HSSFWorkbook();                        // 创建工作簿对象
@@ -70,7 +164,7 @@ public class ExcelUtil {
 
             // 将列头设置到sheet的单元格中
             for(int n=0;n<columnNum;n++){
-                HSSFCell  cellRowName = rowRowName.createCell(n);                //创建列头对应个数的单元格
+                HSSFCell cellRowName = rowRowName.createCell(n);                //创建列头对应个数的单元格
                 cellRowName.setCellType(HSSFCell.CELL_TYPE_STRING);                //设置列头单元格的数据类型
                 HSSFRichTextString text = new HSSFRichTextString(rowName[n]);
                 cellRowName.setCellValue(text);                                    //设置列头单元格的值
@@ -86,12 +180,12 @@ public class ExcelUtil {
                 row.setHeight((short) (25 * 20)); //设置高度
 
                 for(int j=0; j<obj.length; j++){
-                    HSSFCell  cell = null;   //设置单元格的数据类型
+                    HSSFCell cell = null;   //设置单元格的数据类型
                     if(j == 0){
-                        cell = row.createCell(j,HSSFCell.CELL_TYPE_NUMERIC);
+                        cell = row.createCell(j, HSSFCell.CELL_TYPE_NUMERIC);
                         cell.setCellValue(i+1);
                     }else{
-                        cell = row.createCell(j,HSSFCell.CELL_TYPE_STRING);
+                        cell = row.createCell(j, HSSFCell.CELL_TYPE_STRING);
                         if(!"".equals(obj[j]) && obj[j] != null){
                             cell.setCellValue(obj[j].toString());                        //设置单元格的值
                         }
@@ -129,11 +223,13 @@ public class ExcelUtil {
 
             try {
                 String fileName = "Excel-" + title + ".xls";
-                response.reset();
-                response.setContentType("application/vnd.ms-excel;charset=UTF-8");
-                response.addHeader("Content-Disposition",
-                        "attachment;filename=" + URLEncoder.encode(fileName, "UTF-8"));
-                workbook.write(response.getOutputStream());
+
+                this.setResponseHeader(response, fileName);
+                OutputStream out = response.getOutputStream();
+                workbook.write(out);
+                out.flush();
+                out.close();
+//                workbook.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -142,6 +238,38 @@ public class ExcelUtil {
             e.printStackTrace();
         }
 
+    }
+
+    //发送响应流方法
+    private void setResponseHeader(HttpServletResponse response, String fileName) {
+        try {
+            response.reset();
+            response.setContentType("application/octet-stream;charset=ISO8859-1");
+            response.setHeader("Content-Disposition", "attachment;filename="+ fileName);
+            response.addHeader("Pargam", "no-cache");
+            response.addHeader("Cache-Control", "no-cache");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    /**
+     * .
+     * 获取单元格数据内容为字符串类型的数据
+     * TODO
+     * @param cell Excel单元格
+     * @returnString 单元格数据内容
+     */
+    private String getStringCellValue(HSSFCell cell) {
+        String cellValue = "";
+        if(cell!=null) cell.setCellType(Cell.CELL_TYPE_STRING);
+        if(cell.getCellType()== Cell.CELL_TYPE_STRING) {cellValue = cell.getRichStringCellValue().getString(); }
+        if(cell.getCellType()== Cell.CELL_TYPE_NUMERIC) {
+            cell.setCellType(Cell.CELL_TYPE_STRING);
+            cellValue = String.valueOf(cell.getRichStringCellValue().getString());
+        }
+
+        return cellValue;
     }
 
     /*
