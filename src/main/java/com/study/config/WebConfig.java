@@ -13,7 +13,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by gf on 2018/10/17.
+ *
+ * @author gf
+ * @date 2018/10/17
  */
 @Configuration
 public class WebConfig extends WebMvcConfigurerAdapter {

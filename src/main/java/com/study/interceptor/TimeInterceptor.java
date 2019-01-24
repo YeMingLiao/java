@@ -22,7 +22,7 @@ public class TimeInterceptor implements HandlerInterceptor {
         System.out.println(((HandlerMethod)handle).getBean().getClass().getName());
         System.out.println(((HandlerMethod)handle).getMethod().getName());
 
-        request.setAttribute("startTime",new Date().getTime());
+        request.setAttribute("startTime",System.currentTimeMillis());
         return false;
     }
 
@@ -32,7 +32,7 @@ public class TimeInterceptor implements HandlerInterceptor {
 
         Long start = (Long) request.getAttribute("startTime");
 
-        System.out.println("time 耗时："+(new Date().getTime() - start));
+        System.out.println("time 耗时："+(System.currentTimeMillis() - start));
     }
 
     @Override
@@ -41,7 +41,7 @@ public class TimeInterceptor implements HandlerInterceptor {
 
         Long start = (Long) request.getAttribute("startTime");
 
-        System.out.println("time 耗时："+(new Date().getTime() - start));
+        System.out.println("time 耗时："+(System.currentTimeMillis() - start));
 
         System.out.println("exception:"+e.getMessage());
     }

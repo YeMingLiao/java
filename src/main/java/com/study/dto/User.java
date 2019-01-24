@@ -13,7 +13,9 @@ import java.util.Date;
  */
 public class User {
 
-    //申明视图
+    /**
+     *  申明视图
+     */
     public interface UserSimpleView {}
 
     public interface UserDetailView extends UserSimpleView {};

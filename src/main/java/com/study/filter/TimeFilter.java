@@ -10,7 +10,7 @@ import java.util.Date;
  * 拦截：过滤器
  * Created by gf on 2018/10/17.
  */
-//@Component
+@Component
 public class TimeFilter implements Filter{
 
 
@@ -22,9 +22,9 @@ public class TimeFilter implements Filter{
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         System.out.println("time filter start");
-        long start = new Date().getTime();
+        long start = System.currentTimeMillis();
         chain.doFilter(request, response);
-        System.out.println("time filter 耗时:"+ (new Date().getTime() - start));
+        System.out.println("time filter 耗时:"+ (System.currentTimeMillis() - start));
         System.out.println("time filter finish");
     }
 
